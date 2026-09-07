@@ -16,9 +16,16 @@ class Settings(BaseSettings):
     companies_house_api_key: str = ""
     companies_house_base_url: str = "https://api.company-information.service.gov.uk"
 
-    # Anthropic
+    # Hermes via Ollama (local — no data leaves the firm)
+    ollama_base_url: str = "http://ollama:11434/v1"
+    ollama_model: str = "nous-hermes2"   # or nous-hermes2:10.7b, nous-hermes2-mixtral
+
+    # Anthropic (fallback / cloud option — review data handling with firm first)
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-opus-4-5"
+
+    # Which backend to use: "ollama" | "anthropic"
+    llm_backend: str = "ollama"
 
     # Polling
     poll_interval_seconds: int = 3600  # 1 hour default

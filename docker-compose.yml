@@ -4,7 +4,7 @@ services:
     image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: verity
-      POSTGRES_PASSWORD: verity
+      POSTGRES_PASSWORD: ***
       POSTGRES_DB: verity
     volumes:
       - pgdata:/var/lib/postgresql/data
@@ -27,6 +27,38 @@ services:
       timeout: 3s
       retries: 5
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    # GPU support (uncomment if firm server has NVIDIA GPU):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:11434/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ollama_models:/root/.ollama
+    entrypoint: ["ollama", "pull", "nous-hermes2"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    restart: "no"
+
   api:
     build: .
     command: uvicorn verity.api.main:app --host 0.0.0.0 --port 8000 --reload
@@ -37,6 +69,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     volumes:
       - .:/app
@@ -49,6 +83,8 @@ services:
       db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      ollama:
         condition: service_healthy
     volumes:
       - .:/app
@@ -67,3 +103,4 @@ services:
 
 volumes:
   pgdata:
+  ollama_models:
